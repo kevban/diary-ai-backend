@@ -16,12 +16,17 @@ import 'package:diary_ai_backend/api/open_ai_api.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
-  final body = await request.json() as Map<String, dynamic>;
-  final res = await OpenAIAPI.diaryCompletion(
-    body['diaryPrompt'] as String,
-    body['userName'] as String,
-  );
-  return Response.json(
-    body: {'response': res[0], 'prompts': res[1]},
-  );
+  switch (request.method.value) {
+    case 'POST':
+      final body = await request.json() as Map<String, dynamic>;
+      final res = await OpenAIAPI.diaryCompletion(
+        body['diaryPrompt'] as String,
+        body['userName'] as String,
+      );
+      return Response.json(
+        body: {'response': res[0], 'prompts': res[1]},
+      );
+    default:
+      return Response.json(statusCode: 404, body: {'message': 'not found'});
+  }
 }

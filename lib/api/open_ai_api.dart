@@ -1,5 +1,5 @@
 import 'package:dart_openai/openai.dart';
-import 'package:diary_ai_backend/models/character.dart';
+import 'package:diary_ai_backend/classes/character.dart';
 import 'package:diary_ai_backend/env/env.dart';
 import 'dart:math';
 
@@ -18,24 +18,23 @@ class OpenAIAPI {
   ) async {
     const charPrompt = '''
 PROMPT:
-For the following characters, list 15 distinct characteristics, relationships, or facts:
+For the following characters, list (n) distinct characteristics, relationships, or facts:
 COMPLETION:
-Garen, from league of legends:
+Garen, from league of legends (5):
 -is Champion of Demacia
--Wields a massive sword called "Justice"
--Is the younger half-brother of Lux, another champion from Demacia
--Is a member of the Dauntless Vanguard, an elite military unit within Demacia's armed forces
--Possesses high durability and defense, making him an effective tank
--Has the ability to spin with his sword, dealing damage to enemies around him
--Is capable of executing low-health enemies with his ultimate ability, "Demacian Justice"
--Is known for his catchphrase, "Demacia!"
--Has a strong sense of duty and loyalty to his kingdom and people
--Is often portrayed as a paragon of justice and honor, sometimes to the point of being naive or inflexible
--Has a rivalry with the Noxian champion Darius, who represents a more brutal and ruthless philosophy of combat
--Has a close relationship with his fellow Demacian champion, Jarvan IV, who is also a member of the Dauntless Vanguard and the prince of Demacia
--Has a romantic relationship with Katarina, a Noxian assassin who is typically portrayed as his enemy
--Has a strong belief in the power of physical strength and martial prowess, often eschewing magic or other forms of combat
--Has a striking visual design, including his armor, helmet, and flowing red cape
+-wields a massive sword called "Justice"
+-is the younger half-brother of Lux, another champion from Demacia
+-is a member of the Dauntless Vanguard, an elite military unit within Demacia's armed forces
+-is known for his catch-phrase "Demacia!"
+
+Tony Stark, from Marvel (6):
+-is a genius, billionaire, playboy philanthropist"
+-is the inventor of the Iron Man suit
+-is the close friend of James Rhodes, the War Machine",
+-has romantic relationship with Pepper Potts",
+-is a mentor and quasi-father figure to Peter Parker, the Spiderman,
+-possesses a sarcastic wit and dry sense of humor ",
+
 ''';
     const vocabPrompt = '''
 For the following characters, describe their vocabulary style:
@@ -47,13 +46,14 @@ Mario, from Super Mario Bros:informal interjection
     OpenAI.apiKey = Env.apiKey;
     final charCompletion = await OpenAI.instance.completion.create(
       model: 'text-davinci-003',
-      prompt: '$charPrompt$charName, $charDesc:',
+      prompt: '$charPrompt$charName, $charDesc (12):',
       maxTokens: 450,
       temperature: 0,
       frequencyPenalty: 0.5,
       n: 1,
-      stop: [':'],
+      stop: ['\n\n'],
       echo: false,
+      
     );
     final vocabCompletion = await OpenAI.instance.completion.create(
       model: 'text-davinci-003',
@@ -61,7 +61,7 @@ Mario, from Super Mario Bros:informal interjection
       maxTokens: 20,
       temperature: 0,
       n: 1,
-      stop: [':'],
+      stop: ['\n'],
       echo: false,
     );
     final characteristicsStr = charCompletion.choices.first.text;
@@ -80,57 +80,54 @@ Mario, from Super Mario Bros:informal interjection
   ------------------------------------------------------------------------------
   */
   static Future<List<String>> responseCompletion(
-    Character character,
-    int sequence,
+    String charName,
+    String charDesc,
+    String vocab,
+    String reference,
+    String sequence,
     String topic,
     String userName,
-    String? userResponse,
-    String? prevQuestion,
+    String? prevConversation,
   ) async {
     OpenAI.apiKey = Env.apiKey;
-    final random = Random();
-    final reference = character
-        .characteristics[random.nextInt(character.characteristics.length)];
-    final userResponsePrompt =
-        (userResponse != null) ? 'User: $userResponse\n' : '';
     final prevQuestionPrompt =
-        (prevQuestion != null) ? '${character.name}: $prevQuestion\n' : '';
+        (prevConversation != '') ? '$charName: $prevConversation\n' : '';
     var instructPrompt = '''
-(${character.name}'s instruction is to greet User and ask a question about $topic, with reference to ${character.name} $reference)
+($charName's instruction is to greet User with reference to $charName $reference, and ask a question about $topic)
 ''';
     final toplevelPrompt = '''
 PROMPT:
-A conversation between ${character.name}(${character.desc}) and User. ${character.name} will follow ${character.name}'s instructions shown in brackets. Address user by their name, $userName. ${character.name} always uses ${character.vocab} vocabulary.
+A conversation between $charName($charDesc) and User. $charName will follow $charName's instructions shown in brackets. Address User by their name, $userName. $charName always uses $vocab vocabulary.
 
 COMPLETION:
 ''';
 
     switch (sequence) {
-      case 0: // when conversation starts
+      case 'GREET': // when conversation starts
         instructPrompt = '''
-(${character.name}'s instruction is to greet User and ask a question about $topic, with reference to ${character.name} $reference)
-${character.name}:
+($charName's instruction is to greet User and make remarks that show $charName $reference. Then, ask a question about $topic.)
+$charName:
 ''';
         break;
-      case 1: // asking question about the topic
+      case 'ASK': // asking question about the topic
         instructPrompt = '''
-(${character.name}'s instruction is to comment on what user said, and ask a question about $topic, with reference to ${character.name} $reference)
-${character.name}:''';
+($charName's instruction is to comment on what User said and make remarks that show $charName $reference. Then, ask a question about $topic.)
+$charName:''';
         break;
-      case 2: // asking follow up question
+      case 'FOLLOW_UP': // asking follow up question
         instructPrompt = '''
-(${character.name}'s instruction is to comment on what user said, and ask a follow up question relevant to the User, with reference to ${character.name} $reference)
-${character.name}:''';
+($charName's instruction is to comment on what User said and make remarks that show $charName $reference. Then, ask a follow up question to User's statement.)
+$charName:''';
         break;
-      case 3: // asking if there is anything else
+      case 'ANYTHING_ELSE': // asking if there is anything else
         instructPrompt = '''
-(${character.name}'s instruction is to comment on what user said, and ask if there is anything else for the day, with reference to ${character.name} $reference)
-${character.name}:''';
+($charName's instruction is to comment on what User said and make remarks that show $charName $reference. Then, ask if there is anything else for the day.)
+$charName:''';
         break;
-      case 4: // responding ending the conversation
+      case 'END': // responding ending the conversation
         instructPrompt = '''
-(${character.name}'s instruction is do the following with reference to ${character.name} $reference: if the user said if there is nothing else, say fareware to User and end the conversation. Otherwise, comment on what user said, and ask if there is anything else for the day.)
-${character.name}:''';
+($charName's instruction is do the following: if User added new information, comment on what User said, and ask if there is anything else for the day. Otherwise, reference $charName $reference, say fareware to User, and add ENDOFCONV at the end to signal the end of conversation.)
+$charName:''';
         break;
       default:
         break;
@@ -138,7 +135,7 @@ ${character.name}:''';
     final completion = await OpenAI.instance.completion.create(
       model: 'text-davinci-003',
       prompt:
-          '$toplevelPrompt$userResponsePrompt$prevQuestionPrompt$instructPrompt',
+          '$toplevelPrompt$prevQuestionPrompt$instructPrompt',
       maxTokens: 100,
       temperature: 0.8,
       frequencyPenalty: 0.3,
@@ -149,7 +146,7 @@ ${character.name}:''';
 
     return [
       completion.choices.first.text,
-      '$toplevelPrompt$userResponsePrompt$prevQuestionPrompt$instructPrompt'
+      '$toplevelPrompt$prevQuestionPrompt$instructPrompt'
     ];
   }
 

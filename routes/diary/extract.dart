@@ -2,7 +2,7 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:diary_ai_backend/api/open_ai_api.dart';
 
 /* 
-  Get /diary/extract
+  POST /diary/extract
   Body: {
     conversation: String,
     topics: List<String>,
@@ -22,14 +22,18 @@ import 'package:diary_ai_backend/api/open_ai_api.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
-  final body = await request.json() as Map<String, dynamic>;
-  final res = await OpenAIAPI.extractionCompletion(
-      body['conversation'] as String,
-      (body['topics'] as List<dynamic>)
-          .map((e) => e.toString())
-          .toList(),
-      body['charName'] as String,);
-  return Response.json(
-    body: {'response': res[0], 'prompts': res[1]},
-  );
+  switch (request.method.value) {
+    case 'POST':
+      final body = await request.json() as Map<String, dynamic>;
+      final res = await OpenAIAPI.extractionCompletion(
+        body['conversation'] as String,
+        (body['topics'] as List<dynamic>).map((e) => e.toString()).toList(),
+        body['charName'] as String,
+      );
+      return Response.json(
+        body: {'response': res[0], 'prompts': res[1]},
+      );
+    default:
+      return Response.json(statusCode: 404, body: {'message': 'not found'});
+  }
 }

@@ -1,15 +1,15 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:diary_ai_backend/api/open_ai_api.dart';
-import 'package:diary_ai_backend/models/character.dart';
+import 'package:diary_ai_backend/classes/character.dart';
 
 /* 
-  Get /question
+  POST /question
   Body: {
     name: String,
     desc: String,
     vocab: String,
-    characteristics: List<String>,
-    sequence: int,
+    characteristics: String,
+    sequence: String,
     topic: String,
     userName: String,
     userResponse: String?,
@@ -22,24 +22,8 @@ import 'package:diary_ai_backend/models/character.dart';
     "name": "Nagisa",
     "desc": "Anime character from Clannad",
     "vocab": "Casual, poetic language",
-    "characteristics": [
-		"",
-		"Is a student at Hikarizaka Private High School",
-		"Is a member of the school's drama club",
-		"Is a shy and timid girl who is often seen as an outsider by her peers",
-		"Has a strong admiration for her classmate Tomoya Okazaki, whom she eventually falls in love with",
-		"Is the daughter of Akio and Sanae Furukawa, who run the local bakery",
-		"Has an older brother named Ushio, who she is very close to",
-		"Is known for her catchphrase \"Nagisa desu!\" (I'm Nagisa!)",
-		"Often has difficulty expressing her feelings and emotions to others",
-		"Is an aspiring actress and singer, often performing in school plays and concerts ",
-		"Has a strong sense of justice and morality, often standing up for what she believes is right even when it puts her at odds with those around her ",
-		"Develops a close friendship with Tomoyo Sakagami, another student at Hikarizaka Private High School ",
-		"Gains the ability to manipulate time after being granted magical powers by the mysterious robot girl Botan ",
-		"Often wears a pink ribbon in her hair as part of her signature look ",
-		"Is known for being kindhearted and compassionate towards others"
-	],
-    "sequence": 4,
+    "characteristics": "Is the daughter of Akio and Sanae Furukawa, who run the local bakery"
+    "sequence": 'end',
     "topic": "User's mood",
     "userName": "Kevin",
     "userResponse": "That is all, thank you.",
@@ -50,24 +34,25 @@ import 'package:diary_ai_backend/models/character.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
-  final body = await request.json() as Map<String, dynamic>;
-  final character = Character(
-    body['name'] as String,
-    body['desc'] as String,
-    body['vocab'] as String,
-    (body['characteristics'] as List<dynamic>)
-        .map((e) => e.toString())
-        .toList(),
-  );
-  final res = await OpenAIAPI.responseCompletion(
-    character,
-    body['sequence'] as int,
-    body['topic'] as String,
-    body['userName'] as String,
-    (body['userResponse'] == null) ? null : body['userResponse'] as String,
-    (body['prevQuestion'] == null) ? null : body['prevQuestion'] as String,
-  );
-  return Response.json(
-    body: {'response': res[0], 'prompts': res[1]},
-  );
+  switch (request.method.value) {
+    case 'POST':
+      final body = await request.formData();
+      final res = await OpenAIAPI.responseCompletion(
+        body['name']!,
+        body['desc']!,
+        body['vocab']!,
+        body['characteristic']!,
+        body['sequence']!,
+        body['topic']!,
+        body['userName']!,
+        (body['prevConversation'] == null) ? null : body['prevConversation'],
+      );
+      print(res[0]);
+      print(res[1]);
+      return Response.json(
+        body: {'response': res[0], 'prompts': res[1]},
+      );
+    default:
+      return Response.json(statusCode: 404, body: {'message': 'not found'});
+  }
 }

@@ -17,49 +17,51 @@ class OpenAIAPI {
     String charDesc,
   ) async {
     const charPrompt = '''
-PROMPT:
-For the following characters, list (n) distinct characteristics, relationships, or facts:
-COMPLETION:
-Garen, from league of legends (5):
--is Champion of Demacia
--wields a massive sword called "Justice"
--is the younger half-brother of Lux, another champion from Demacia
--is a member of the Dauntless Vanguard, an elite military unit within Demacia's armed forces
--is known for his catch-phrase "Demacia!"
+Describe things that would constantly appear in the following character's speech:
 
-Tony Stark, from Marvel (6):
--is a genius, billionaire, playboy philanthropist"
--is the inventor of the Iron Man suit
--is the close friend of James Rhodes, the War Machine",
--has romantic relationship with Pepper Potts",
--is a mentor and quasi-father figure to Peter Parker, the Spiderman,
--possesses a sarcastic wit and dry sense of humor ",
+8 things for Mario, from Super Mario Bros:
+-exclamations such as "Yahoo!", "Mamma Mia!", and "It's-a me, Mario!"
+-phrases related to adventure and exploration such as "Let's-a go!" and "Here we go!"
+-references to his brother Luigi such as "Luigi, I'm-a coming!" and "Luigi, are you ready?"
+-expressions of joy such as "Wahoo!" and "Woohoo!"
+-references to Princess Peach such as "Ohhh, Princess Peach!" and "The Princess is in another castle!"
+-references to his enemies such as "Bowser, you fiend!" and "Take that, Koopa Troopa!"
+-comments about his size such as "Look at me, I'm so tiny!" and "I'm just a little guy!"
+-references to his Italian heritage such as "Mamma Mia!", "Ciao!", and "Buon giorno!"
+
+4 things for Donald Trump, president of U.S.:
+-catchphrases such as "We will make America great again!", "build a wall", and  "Fake news!"
+-expressions of patriotism such as "God bless America!" and "America is the greatest nation on Earth!"
+-references to his presidential accomplishments such as "I have done more in my first term than any other president in history!" and "Nobody has ever done what I have done for the black community"
+-adjectives such as "tremendous", "huge", and "unprecedented"
 
 ''';
-    const vocabPrompt = '''
-For the following characters, describe their vocabulary style:
+final vocabPrompt = '''
+For the following characters, describe their how they talk:
 
-Elon Musk: Technical Jargon
-Snake, from Metal Gear Solid:tactical military language
-Mario, from Super Mario Bros:informal interjection
+Elon Musk, entrepreneur, always has a confident and ambitious attitude and constantly uses technical jargons.
+Nagisa, from Clannad, always has a polite and humble attitude and constantly uses poetic representations.
+Mario, from Super Mario Bros, always has an upbeat and enthusiastic attitude and constantly uses catchphrases.
+Donald Trump, U.S. president, always has a brash and assertive attitude and constantly uses bombastic language.
+$charName, $charDesc, always
 ''';
     OpenAI.apiKey = Env.apiKey;
     final charCompletion = await OpenAI.instance.completion.create(
       model: 'text-davinci-003',
-      prompt: '$charPrompt$charName, $charDesc (12):',
+      prompt: '${charPrompt}12 things for $charName, $charDesc:',
       maxTokens: 450,
       temperature: 0,
       frequencyPenalty: 0.5,
       n: 1,
       stop: ['\n\n'],
       echo: false,
-      
     );
     final vocabCompletion = await OpenAI.instance.completion.create(
       model: 'text-davinci-003',
-      prompt: '$vocabPrompt$charName, $charDesc:',
-      maxTokens: 20,
+      prompt: vocabPrompt,
+      maxTokens: 450,
       temperature: 0,
+      frequencyPenalty: 0.5,
       n: 1,
       stop: ['\n'],
       echo: false,
@@ -82,7 +84,7 @@ Mario, from Super Mario Bros:informal interjection
   static Future<List<String>> responseCompletion(
     String charName,
     String charDesc,
-    String vocab,
+    String charVocab,
     String reference,
     String sequence,
     String topic,
@@ -90,53 +92,48 @@ Mario, from Super Mario Bros:informal interjection
     String? prevConversation,
   ) async {
     OpenAI.apiKey = Env.apiKey;
-    final prevQuestionPrompt =
+    var prevQuestionPrompt =
         (prevConversation != '') ? '$charName: $prevConversation\n' : '';
     var instructPrompt = '''
 ($charName's instruction is to greet User with reference to $charName $reference, and ask a question about $topic)
 ''';
     final toplevelPrompt = '''
-PROMPT:
-A conversation between $charName($charDesc) and User. $charName will follow $charName's instructions shown in brackets. Address User by their name, $userName. $charName always uses $vocab vocabulary.
-
-COMPLETION:
+Conversation between User and AI pretending to be $charName, $charDesc. AI will follow instructions in {}. AI will always include $reference in its speech. User's name is $userName. AI always $charVocab. AI cannot have more than one question in its speech.
 ''';
 
     switch (sequence) {
       case 'GREET': // when conversation starts
         instructPrompt = '''
-($charName's instruction is to greet User and make remarks that show $charName $reference. Then, ask a question about $topic.)
-$charName:
-''';
+{Greet using over 30 words, and ask a follow up question about User's day.}
+AI:''';
         break;
       case 'ASK': // asking question about the topic
         instructPrompt = '''
-($charName's instruction is to comment on what User said and make remarks that show $charName $reference. Then, ask a question about $topic.)
-$charName:''';
+{Comment using over 30 words and move on to ask a single question about $topic, }
+AI:''';
         break;
       case 'FOLLOW_UP': // asking follow up question
         instructPrompt = '''
-($charName's instruction is to comment on what User said and make remarks that show $charName $reference. Then, ask a follow up question to User's statement.)
-$charName:''';
+{Comment using over 30 words, and ask a single follow up question about $topic,}
+AI:''';
         break;
       case 'ANYTHING_ELSE': // asking if there is anything else
         instructPrompt = '''
-($charName's instruction is to comment on what User said and make remarks that show $charName $reference. Then, ask if there is anything else for the day.)
-$charName:''';
+{Comment using over 30 words, and move on to ask if there is anything else for the day}
+AI:''';
         break;
       case 'END': // responding ending the conversation
         instructPrompt = '''
-($charName's instruction is do the following: if User added new information, comment on what User said, and ask if there is anything else for the day. Otherwise, reference $charName $reference, say fareware to User, and add ENDOFCONV at the end to signal the end of conversation.)
-$charName:''';
+{If user is ending the conversation, e.g. "nothing else", end the conversation and include ENDOFCONV at the end to signal conversation is over. Otherwise, comment and ask if there is anything else. Use over 30 words}
+AI:''';
         break;
       default:
         break;
     }
     final completion = await OpenAI.instance.completion.create(
       model: 'text-davinci-003',
-      prompt:
-          '$toplevelPrompt$prevQuestionPrompt$instructPrompt',
-      maxTokens: 100,
+      prompt: '$toplevelPrompt$prevQuestionPrompt$instructPrompt',
+      maxTokens: 300,
       temperature: 0.8,
       frequencyPenalty: 0.3,
       n: 1,
@@ -184,7 +181,9 @@ ${topics[0]}:''';
   ------------------------------------------------------------------------------
   */
   static Future<List<String>> diaryCompletion(
-      String diaryPrompt, String userName,) async {
+    String diaryPrompt,
+    String userName,
+  ) async {
     OpenAI.apiKey = Env.apiKey;
     final prompt = '''
 PROMPT:

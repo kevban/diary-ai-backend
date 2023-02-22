@@ -7,7 +7,6 @@ class Character {
   String name;
   /// description of character
   String desc;
-  /// the vocabulary of the character
   String vocab;
   /// list of characteristics that the character will refer to
   List<String> characteristics = [];

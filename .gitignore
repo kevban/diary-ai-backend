@@ -15,4 +15,4 @@ coverage/
 # environment variables
 .env
 /lib/env/env.g.dart
-lib/env
+lib/env/

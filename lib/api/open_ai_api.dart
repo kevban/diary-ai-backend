@@ -93,39 +93,69 @@ $charName, $charDesc, always
   ) async {
     OpenAI.apiKey = Env.apiKey;
     var prevQuestionPrompt =
-        (prevConversation != '') ? '$charName: $prevConversation\n' : '';
+        (prevConversation != '') ? prevConversation : '';
     var instructPrompt = '''
 ($charName's instruction is to greet User with reference to $charName $reference, and ask a question about $topic)
 ''';
     final toplevelPrompt = '''
-Conversation between User and AI pretending to be $charName, $charDesc. AI will follow instructions in {}. AI will always include $reference in its speech. User's name is $userName. AI always $charVocab. AI cannot have more than one question in its speech.
+Conversation between User and AI pretending to be $charName, $charDesc. AI will follow instructions in {}. AI can only have one question mark in its speech. User's name is $userName. AI always $charVocab
 ''';
 
     switch (sequence) {
       case 'GREET': // when conversation starts
         instructPrompt = '''
-{Greet using over 30 words, and ask a follow up question about User's day.}
+
+{Greet User using $reference. Then and ask a follow up question about User's day. Use at least 50 words.}
 AI:''';
         break;
       case 'ASK': // asking question about the topic
         instructPrompt = '''
-{Comment using over 30 words and move on to ask a single question about $topic, }
+
+{Comment using $reference Then move on to ask a single question about $topic. Use at least 50 words.}
 AI:''';
         break;
       case 'FOLLOW_UP': // asking follow up question
         instructPrompt = '''
-{Comment using over 30 words, and ask a single follow up question about $topic,}
+
+{Comment using $reference Then ask a single follow up question about $topic. Use at least 50 words.}
 AI:''';
         break;
       case 'ANYTHING_ELSE': // asking if there is anything else
         instructPrompt = '''
-{Comment using over 30 words, and move on to ask if there is anything else for the day}
+
+{Comment using $reference Then move on to ask if there is anything else for the day. Use at least 50 words.}
 AI:''';
         break;
       case 'END': // responding ending the conversation
-        instructPrompt = '''
-{If user is ending the conversation, e.g. "nothing else", end the conversation and include ENDOFCONV at the end to signal conversation is over. Otherwise, comment and ask if there is anything else. Use over 30 words}
+      print(prevConversation);
+      final checkEndCompletion = await OpenAI.instance.completion.create(
+      model: 'text-davinci-003',
+      prompt: '''
+Q&A:
+$prevConversation
+
+Question:
+For the above Q&A, is there anything else? (Yes or no)
+
+Answer:''',
+      maxTokens: 10,
+      temperature: 0,
+      frequencyPenalty: 0.3,
+      n: 1,
+      stop: ['User'],
+      echo: false,
+    );
+    if (checkEndCompletion.choices.first.text.toLowerCase().contains('yes')) {
+      instructPrompt = '''
+
+{Comment using $reference Then move on to ask if there is anything else for the day. Use at least 50 words.}
 AI:''';
+    } else {
+      instructPrompt = '''
+
+{End the conversation and include ENDOFCONV at the end to signal conversation is over. Use at least 30 words.}
+AI:''';
+    }
         break;
       default:
         break;
@@ -153,19 +183,21 @@ AI:''';
   ------------------------------------------------------------------------------
   */
   static Future<List<String>> extractionCompletion(
-      String conversation, List<String> topics, String charName) async {
+      String conversation, List<String> topics,) async {
     OpenAI.apiKey = Env.apiKey;
     final topicStr = topics.join(', ');
     final prompt = '''
-PROMPT:
-${conversation}Extract detailed information about $topicStr, without mentioning the conversation with $charName.
+User's statements:
+${conversation}
 
-COMPLETION:
+Extract detailed information about $topicStr, using User's statements above.
+
+Information:
 ${topics[0]}:''';
     final completion = await OpenAI.instance.completion.create(
       model: 'text-davinci-003',
       prompt: prompt,
-      maxTokens: 100,
+      maxTokens: 200,
       temperature: 0,
       frequencyPenalty: 0.3,
       n: 1,
@@ -187,7 +219,7 @@ ${topics[0]}:''';
     OpenAI.apiKey = Env.apiKey;
     final prompt = '''
 PROMPT:
-Write a 300-word diary entry for $userName(User). The diary should only contain factual information from below:
+Write a diary entry for $userName(User) with at least 200 words. The diary should only contain factual information from below:
 $diaryPrompt
 COMPLETION:
 Dear Diary,
@@ -195,7 +227,7 @@ Dear Diary,
     final completion = await OpenAI.instance.completion.create(
       model: 'text-davinci-003',
       prompt: prompt,
-      maxTokens: 350,
+      maxTokens: 450,
       temperature: 0.8,
       frequencyPenalty: 0.3,
       n: 1,

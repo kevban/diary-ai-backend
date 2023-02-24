@@ -18,10 +18,10 @@ Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
   switch (request.method.value) {
     case 'POST':
-      final body = await request.json() as Map<String, dynamic>;
+      final body = await request.formData();
       final res = await OpenAIAPI.diaryCompletion(
-        body['diaryPrompt'] as String,
-        body['userName'] as String,
+        body['diaryPrompt']!,
+        body['userName']!,
       );
       return Response.json(
         body: {'response': res[0], 'prompts': res[1]},

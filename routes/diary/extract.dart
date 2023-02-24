@@ -5,8 +5,7 @@ import 'package:diary_ai_backend/api/open_ai_api.dart';
   POST /diary/extract
   Body: {
     conversation: String,
-    topics: List<String>,
-    charName: String
+    topics: String (topic1||topic2||...)
   }
   Auth: token required in header
   Example: {
@@ -24,11 +23,10 @@ Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
   switch (request.method.value) {
     case 'POST':
-      final body = await request.json() as Map<String, dynamic>;
+      final body = await request.formData();
       final res = await OpenAIAPI.extractionCompletion(
-        body['conversation'] as String,
-        (body['topics'] as List<dynamic>).map((e) => e.toString()).toList(),
-        body['charName'] as String,
+        body['conversation']!,
+        body['topics']!.split('||')
       );
       return Response.json(
         body: {'response': res[0], 'prompts': res[1]},

@@ -14,7 +14,7 @@ RUN dart pub get
 
 # Copy app source code and AOT compile it.
 COPY . .
-# Ensure packages are still up-to-date if anything has changed
+# Ensure packages are still up-to-date if anything has changedgit 
 RUN dart pub get --offline
 
 RUN dart_frog build

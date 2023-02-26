@@ -10,6 +10,7 @@ class CharacterModel {
       'name': character.name,
       'desc': character.desc,
       'vocab': character.vocab,
+      'imgBase64': character.imgBase64,
       'characteristics': character.characteristics
     });
   }

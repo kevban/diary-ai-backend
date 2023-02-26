@@ -25,18 +25,19 @@ Future<Response> onRequest(RequestContext context) async {
         body['name']!,
         body['desc']!,
       );
+      character.imgBase64 = body['imgBase64'];
       await CharacterModel.addChar(character);
       return Response.json(
         body: {
           'name': character.name,
           'desc': character.desc,
           'vocab': character.vocab,
+          'imgBase64': character.imgBase64,
           'characteristics': character.characteristics,
         },
       );
     case 'GET':
       final charList = await CharacterModel.getChar();
-      print(charList);
       return Response.json(body: {'characters': charList});
     default:
       return Response.json(statusCode: 404, body: {'message': 'not found'});

@@ -53,7 +53,7 @@ $charName, $charDesc, always
       temperature: 0,
       frequencyPenalty: 0.5,
       n: 1,
-      stop: ['\n\n'],
+      stop: ['things for'],
       echo: false,
     );
     final vocabCompletion = await OpenAI.instance.completion.create(
@@ -68,6 +68,7 @@ $charName, $charDesc, always
     );
     final characteristicsStr = charCompletion.choices.first.text;
     final vocabStr = vocabCompletion.choices.first.text;
+    print('${charPrompt}12 things for $charName, $charDesc:');
     return Character(
       charName,
       charDesc,
@@ -98,32 +99,32 @@ $charName, $charDesc, always
 ($charName's instruction is to greet User with reference to $charName $reference, and ask a question about $topic)
 ''';
     final toplevelPrompt = '''
-Conversation between User and AI pretending to be $charName, $charDesc. AI will follow instructions in {}. AI can only have one question mark in its speech. User's name is $userName. AI always $charVocab
+Conversation between User and AI pretending to be $charName, $charDesc. AI will follow instructions in {}. AI can only have one question mark in its speech. User's name is $userName.
 ''';
 
     switch (sequence) {
       case 'GREET': // when conversation starts
         instructPrompt = '''
 
-{Greet User using $reference. Then and ask a follow up question about User's day. Use at least 50 words.}
+{Greet User using $reference. Then and ask a follow up question about $topic. Use at least 50 words. AI always $charVocab}
 AI:''';
         break;
       case 'ASK': // asking question about the topic
         instructPrompt = '''
 
-{Comment using $reference Then move on to ask a single question about $topic. Use at least 50 words.}
+{Comment using $reference Then move on to ask a single question about $topic. Use at least 50 words. AI always $charVocab}
 AI:''';
         break;
       case 'FOLLOW_UP': // asking follow up question
         instructPrompt = '''
 
-{Comment using $reference Then ask a single follow up question about $topic. Use at least 50 words.}
+{Comment using $reference Then ask a single follow up question about $topic. Use at least 50 words. AI always $charVocab}
 AI:''';
         break;
       case 'ANYTHING_ELSE': // asking if there is anything else
         instructPrompt = '''
 
-{Comment using $reference Then move on to ask if there is anything else for the day. Use at least 50 words.}
+{Comment using $reference Then move on to ask if there is anything else for the day. Use at least 50 words. AI always $charVocab}
 AI:''';
         break;
       case 'END': // responding ending the conversation
@@ -148,12 +149,12 @@ Answer:''',
     if (checkEndCompletion.choices.first.text.toLowerCase().contains('yes')) {
       instructPrompt = '''
 
-{Comment using $reference Then move on to ask if there is anything else for the day. Use at least 50 words.}
+{Comment using $reference Then move on to ask if there is anything else for the day. Use at least 50 words. Use $charVocab}
 AI:''';
     } else {
       instructPrompt = '''
 
-{End the conversation and include ENDOFCONV at the end to signal conversation is over. Use at least 30 words.}
+{End the conversation and include ENDOFCONV at the end to signal conversation is over. Use at least 30 words. Use $charVocab}
 AI:''';
     }
         break;
@@ -219,7 +220,7 @@ ${topics[0]}:''';
     OpenAI.apiKey = Env.apiKey;
     final prompt = '''
 PROMPT:
-Write a diary entry for $userName(User) with at least 200 words. The diary should only contain factual information from below:
+Write a diary entry for $userName(User). The diary should only contain factual information from below:
 $diaryPrompt
 COMPLETION:
 Dear Diary,

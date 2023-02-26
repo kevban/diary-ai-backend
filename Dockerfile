@@ -1,5 +1,5 @@
 # Use an official Dart image as the base image
-FROM google/dart:2.14.4
+FROM dart:stable AS build
 
 # Set the working directory to /app
 WORKDIR /app

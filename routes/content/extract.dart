@@ -1,6 +1,5 @@
 import 'package:dart_frog/dart_frog.dart';
 import 'package:diary_ai_backend/api/chatgpt_api.dart';
-import 'package:diary_ai_backend/api/open_ai_api.dart';
 
 /* 
   POST /diary/extract

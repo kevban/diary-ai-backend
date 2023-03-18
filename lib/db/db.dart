@@ -5,8 +5,11 @@ import 'package:mongo_dart/mongo_dart.dart';
 Db? db;
 /// returns the db instance. Connect to db if not connected already
 Future<Db> connectDb() async {
-  db = await Db.create(Env.mongodbUri);
-  if (!db!.isConnected) {
+  
+  if (db == null) {
+    db = await Db.create(Env.mongodbUri);
+    await db!.open();
+  } else if (!db!.isConnected) {
     await db!.open();
   }
   return db!;

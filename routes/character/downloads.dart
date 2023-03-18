@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dart_frog/dart_frog.dart';
 import 'package:diary_ai_backend/api/chatgpt_api.dart';
 import 'package:diary_ai_backend/api/open_ai_api.dart';
@@ -23,39 +21,17 @@ import 'package:diary_ai_backend/db/user_model.dart';
 Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
   switch (request.method.value) {
-    case 'POST':
+    case 'PATCH':
     final user = await UserModel.getUserById(id: context.read<String>());
       if (user == null) {
         return Response.json(statusCode: 401, body: {'error': 'unauthorized'});
       }
       final body = await request.json();
-      await CharacterModel.addChar(
-        id: body['id'] as String,
-        name: body['name'] as String,
-        desc: body['desc'] as String,
-        vocab: body['vocab'] as String,
-        characteristics: (body['characteristics'] as List<dynamic>)
-            .map((e) => e as String)
-            .toList(),
-        imgBase64: body['imgBase64'] as String?,
-      );
+      await CharacterModel.addDownloads(id: body['id'] as String);
       return Response.json(
         statusCode: 201,
         body: {'message': 'success'},
       );
-    case 'GET':
-      final body = request.uri.queryParameters;
-      if (body['charName'] != null) {
-        final characters = await CharacterModel.getChar(
-          searchTerm: body['charName']!,
-        );
-        return Response.json(
-          body: characters,
-        );
-      } else {
-        final characters = await CharacterModel.getPopularChar();
-        return Response.json(body: characters);
-      }
     default:
       return Response.json(statusCode: 404, body: {'error': 'not found'});
   }

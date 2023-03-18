@@ -2,28 +2,22 @@ import 'package:dart_frog/dart_frog.dart';
 import 'package:diary_ai_backend/api/chatgpt_api.dart';
 import 'package:diary_ai_backend/api/open_ai_api.dart';
 import 'package:diary_ai_backend/classes/character.dart';
+import 'package:diary_ai_backend/db/character_model.dart';
 import 'package:diary_ai_backend/db/user_model.dart';
 
 /* 
-  POST /question
+  POST /character
   Body: {
-    charName: String,
-    charDesc: String,
-    vocab: String,
-    userName: String,
-    userDesc: String,
-    reference: String,
-    topic: String,
-    prevConversation: String?
-    sequence: String,
+    name: String,
+    desc: String
   }
   Auth: token required in header
-
-  Example:
-
-
+  Response: {
+    name,
+    desc,
+    characteristics
+  }
 */
-
 Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
   switch (request.method.value) {
@@ -42,26 +36,18 @@ Future<Response> onRequest(RequestContext context) async {
         }
       }
       final body = await request.json();
-      List<String> prevConversationArr =
-          (body['prevConversation'] as String).split('\n');
-      final res = await ChatGPTAPI.chatCompletionV2(
+      final vocab = await ChatGPTAPI.vocabGeneration(
         userId: context.read<String>(),
-        userStart: body['userStart'] as bool,
         charName: body['charName'] as String,
         charDesc: body['charDesc'] as String,
-        vocab: body['vocab'] as String,
-        userName: body['userName'] as String,
-        userDesc: body['userDesc'] as String,
-        reference: body['reference'] as String?,
-        prevConversation: prevConversationArr,
-        settings: body['settings'] as String,
-        vocabOverride: body['vocabOverride'] as String?,
       );
       return Response.json(
         statusCode: 201,
-        body: res,
+        body: vocab,
       );
+    case 'GET':
+      return Response.json(body: 'hi');
     default:
-      return Response.json(statusCode: 404, body: 'not found');
+      return Response.json(statusCode: 404, body: {'error': 'not found'});
   }
 }

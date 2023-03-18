@@ -1,4 +1,5 @@
 import 'package:dart_frog/dart_frog.dart';
+import 'package:diary_ai_backend/api/chatgpt_api.dart';
 import 'package:diary_ai_backend/api/open_ai_api.dart';
 
 /* 
@@ -18,15 +19,17 @@ Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
   switch (request.method.value) {
     case 'POST':
-      final body = await request.formData();
-      final res = await OpenAIAPI.diaryCompletion(
-        body['diaryPrompt']!,
-        body['userName']!,
+      final body = await request.json();
+      final res = await ChatGPTAPI.contentCompletion(
+        contentType: body['contentType'] as String,
+        facts: body['facts'] as String,
+        userName: body['userName'] as String,
+        starter: body['starter'] as String,
       );
       return Response.json(
-        body: {'response': res[0], 'prompts': res[1]},
+        body: res,
       );
     default:
-      return Response.json(statusCode: 404, body: {'message': 'not found'});
+      return Response.json(statusCode: 404, body: 'not found');
   }
 }

@@ -11,8 +11,8 @@ abstract class Env {
     @EnviedField(varName: 'MONGODB_URI')
     static const mongodbUri = _Env.mongodbUri;
 
-    @EnviedField(varName: 'IMGBB_API_KEY')
-    static const imgKey = _Env.imgKey;
+    @EnviedField(varName: 'JWT_SECRET')
+    static const jwtSecret = _Env.jwtSecret;
 }
 
 // dart run build_runner build

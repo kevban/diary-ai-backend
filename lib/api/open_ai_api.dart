@@ -49,7 +49,7 @@ $charName, $charDesc, always
     final charCompletion = await OpenAI.instance.completion.create(
       model: 'text-davinci-003',
       prompt: '${charPrompt}12 things for $charName, $charDesc:',
-      maxTokens: 450,
+      maxTokens: 500,
       temperature: 0,
       frequencyPenalty: 0.5,
       n: 1,
@@ -59,7 +59,7 @@ $charName, $charDesc, always
     final vocabCompletion = await OpenAI.instance.completion.create(
       model: 'text-davinci-003',
       prompt: vocabPrompt,
-      maxTokens: 450,
+      maxTokens: 300,
       temperature: 0,
       frequencyPenalty: 0.5,
       n: 1,
@@ -69,6 +69,7 @@ $charName, $charDesc, always
     final characteristicsStr = charCompletion.choices.first.text;
     final vocabStr = vocabCompletion.choices.first.text;
     print('${charPrompt}12 things for $charName, $charDesc:');
+    print('Finish reason ${charCompletion.choices.first.finishReason}');
     return Character(
       charName,
       charDesc,

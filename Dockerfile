@@ -12,6 +12,10 @@ RUN dart pub get
 # Copy app source code and AOT compile it.
 COPY . .
 
+ARG OPEN_AI_API_KEY
+ARG JWT_SECRET
+ARG MONGODB_URI
+
 RUN dart run build_runner build
 
 # Generate a production build.

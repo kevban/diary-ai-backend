@@ -8,7 +8,7 @@ environment:
 
 dependencies:
   dart_frog: ^0.3.0
-  dart_frog_cli: ^0.3.3
+  dart_frog_cli: ^0.3.2
   dart_jsonwebtoken: ^2.7.1
   envied: ^0.3.0
   mongo_dart: ^0.8.2

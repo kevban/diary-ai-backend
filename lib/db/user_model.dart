@@ -31,9 +31,9 @@ class UserModel {
   }
 
   static Future<Map<String, dynamic>> addUser(
-      {required String? deviceId, required String ipAddress}) async {
+      {required String? deviceId,}) async {
     final db = await connectDb();
-    String? userUID = deviceId == null ? null : deviceId + ipAddress;
+    String? userUID = deviceId == null ? null : deviceId;
     String id = Uuid().v4();
     final jwt = JWT(
       {

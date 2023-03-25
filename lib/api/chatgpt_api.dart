@@ -103,7 +103,7 @@ $charName always $vocab But I will assume you are aware that this conversation i
         ...prevConversationPrompt,
       ],
       'max_tokens': 300,
-      'stop': ['\n$userName', '\n$charName'],
+      'stop': ['\n$userName', '\n$charName', '$userName:'],
       'user': userId,
     });
 

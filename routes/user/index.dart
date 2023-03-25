@@ -27,7 +27,6 @@ import 'package:diary_ai_backend/env/env.dart';
 
 Future<Response> onRequest(RequestContext context) async {
   final request = context.request;
-  final requestAddress = request.connectionInfo.remoteAddress.address;
   switch (request.method.value) {
     case 'GET':
       final body = await request.json();
@@ -46,7 +45,7 @@ Future<Response> onRequest(RequestContext context) async {
     case 'POST':
       final body = await request.json();
       final res = await UserModel.addUser(
-          deviceId: body['deviceId'] as String?, ipAddress: requestAddress);
+          deviceId: body['deviceId'] as String?);
       return Response.json(
         statusCode: 201,
         body: jsonEncode({'token': res['token'], 'curToken': res['curToken']}),
